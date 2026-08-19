@@ -42,12 +42,16 @@ class Config:
     # --- Шаблон авто-метаданных для шортсов (настраивается через .env) ---
     SHORTS_SITE_URL: str = os.getenv("SHORTS_SITE_URL", "")
     SHORTS_TG_URL: str = os.getenv("SHORTS_TG_URL", "")
-    # Путь к файлу-шаблону со всеми строками шортса (пусто = встроенные дефолты)
-    SHORTS_TEMPLATE_FILE: Path | None = (
-        (BASE_DIR / os.getenv("SHORTS_TEMPLATE_FILE")).resolve()
-        if os.getenv("SHORTS_TEMPLATE_FILE")
-        else None
-    )
+    # Файл-шаблон шортсов. Если переменная пуста — автоматически используется
+    # shorts_template.txt из корня проекта (если он есть), иначе встроенные дефолты.
+    SHORTS_TEMPLATE_FILE: Path | None
+    _template_env = os.getenv("SHORTS_TEMPLATE_FILE", "").strip()
+    if _template_env:
+        SHORTS_TEMPLATE_FILE = (BASE_DIR / _template_env).resolve()
+    elif (BASE_DIR / "shorts_template.txt").exists():
+        SHORTS_TEMPLATE_FILE = (BASE_DIR / "shorts_template.txt").resolve()
+    else:
+        SHORTS_TEMPLATE_FILE = None
     SHORTS_BASE_TAGS: list[str] = [
         t.strip()
         for t in os.getenv(

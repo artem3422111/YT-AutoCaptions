@@ -129,7 +129,13 @@ https://download.pytorch.org/whl/cu126`.
 cp shorts_template.txt.example shorts_template.txt
 ```
 
-Откройте `shorts_template.txt` и отредактируйте секции:
+Откройте `shorts_template.txt` и отредактируйте секции: файл **подхватится
+автоматически** (приложение ищет `shorts_template.txt` в корне проекта). Если хотите
+указать другой путь — пропишите в `.env`:
+
+```ini
+SHORTS_TEMPLATE_FILE=shorts_template.txt
+```
 
 | Секция | Назначение |
 |--------|-----------|
