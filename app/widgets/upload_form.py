@@ -155,26 +155,15 @@ class UploadForm(QWidget):
         self.title_edit.textChanged.connect(self._update_upload_state)
         grid.addWidget(self.title_edit, 0, 1, 1, 2)
 
-        grid.addWidget(self._field_label("Описание"), 1, 0)
-        self.desc_edit = QPlainTextEdit(box)
-        self.desc_edit.setPlaceholderText("Расскажите, о чём это видео…")
-        self.desc_edit.setMinimumHeight(110)
-        # Описание растягивается вместе с окном (можно увеличивать высоту)
-        self.desc_edit.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
-        grid.addWidget(self.desc_edit, 1, 1, 1, 2)
-        grid.setRowStretch(1, 1)
-
-        grid.addWidget(self._field_label("Теги"), 2, 0)
+        grid.addWidget(self._field_label("Теги"), 1, 0)
         self.tags_edit = QLineEdit(box)
         self.tags_edit.setPlaceholderText("через запятую: python, туториал, ютуб")
-        grid.addWidget(self.tags_edit, 2, 1, 1, 2)
+        grid.addWidget(self.tags_edit, 1, 1, 1, 2)
 
-        grid.addWidget(self._field_label("Категория"), 3, 0)
+        grid.addWidget(self._field_label("Категория"), 2, 0)
         self.category_combo = QComboBox(box)
         self.category_combo.addItem("People & Blogs", "22")
-        grid.addWidget(self.category_combo, 3, 1)
+        grid.addWidget(self.category_combo, 2, 1)
 
         hint = QLabel(
             "Для шортсов YouTube рекомендует категорию «Films & Animation».",
@@ -184,7 +173,18 @@ class UploadForm(QWidget):
         hint.setWordWrap(True)
         if not self.is_shorts:
             hint.hide()
-        grid.addWidget(hint, 3, 2)
+        grid.addWidget(hint, 2, 2)
+
+        # Описание — внизу карточки, растягивается в свободном пространстве
+        grid.addWidget(self._field_label("Описание"), 3, 0)
+        self.desc_edit = QPlainTextEdit(box)
+        self.desc_edit.setPlaceholderText("Расскажите, о чём это видео…")
+        self.desc_edit.setMinimumHeight(110)
+        self.desc_edit.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        grid.addWidget(self.desc_edit, 3, 1, 1, 2)
+        grid.setRowStretch(3, 1)
 
         return box
 
