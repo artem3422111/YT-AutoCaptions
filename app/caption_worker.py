@@ -1,8 +1,4 @@
-"""Воркер капшена в отдельном потоке (QThread).
-
-Распознавание речи и встраивание субтитров — длительная операция, поэтому
-выполняется в фоне. UI общается через сигналы progress / succeeded / failed.
-"""
+"""Воркер капшена в отдельном потоке (QThread), не блокирует UI."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,9 +11,9 @@ from app import caption as cap
 class CaptionWorker(QThread):
     """Накладывает karaoke-субтитры на видео в фоновом потоке."""
 
-    progress = pyqtSignal(int, str)   # (percent, message)
-    succeeded = pyqtSignal(str)       # путь к итоговому файлу
-    failed = pyqtSignal(str)          # сообщение об ошибке
+    progress = pyqtSignal(int, str)
+    succeeded = pyqtSignal(str)
+    failed = pyqtSignal(str)
 
     def __init__(
         self,

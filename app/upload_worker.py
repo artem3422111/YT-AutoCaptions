@@ -1,8 +1,4 @@
-"""Воркер загрузки видео в отдельном потоке (QThread).
-
-Позволяет не блокировать UI во время медленной загрузки файла на YouTube.
-Общается с интерфейсом через сигналы: progress, finished, error.
-"""
+"""Воркер загрузки видео в отдельном потоке (QThread), не блокирует UI."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,9 +11,9 @@ from app.youtube_client import UploadResult, YouTubeClient
 class UploadWorker(QThread):
     """Выполняет загрузку одного видео/шортса в фоновом потоке."""
 
-    progress = pyqtSignal(int, str)      # (percent, message)
-    succeeded = pyqtSignal(object)       # UploadResult
-    failed = pyqtSignal(str)             # сообщение об ошибке
+    progress = pyqtSignal(int, str)
+    succeeded = pyqtSignal(object)
+    failed = pyqtSignal(str)
 
     def __init__(
         self,

@@ -1,8 +1,4 @@
-"""Вкладка «Субтитры» — распознавание речи и наложение karaoke-субтитров.
-
-Пользователь выбирает видео, получает примерное время работы и запускает
-наложение. Слова подсвечиваются жёлтым по мере произнесения, остальные — белые.
-"""
+"""Вкладка «Субтитры»: выбор видео, оценка времени и наложение karaoke-субтитров."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -145,9 +141,6 @@ class CaptionTab(QWidget):
         label.setObjectName("fieldLabel")
         return label
 
-    # ------------------------------------------------------------------ #
-    # Выбор файла / оценка
-    # ------------------------------------------------------------------ #
     def _choose_video(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите видео", str(Path.home()), VIDEO_EXTENSIONS
@@ -174,9 +167,6 @@ class CaptionTab(QWidget):
         return None
 
 
-    # ------------------------------------------------------------------ #
-    # Запуск
-    # ------------------------------------------------------------------ #
     def _on_caption_clicked(self) -> None:
         if not self._video_path or not self._video_path.exists():
             self._set_status("Сначала выберите видеофайл.", error=True)
@@ -228,9 +218,6 @@ class CaptionTab(QWidget):
     def _on_finished(self) -> None:
         self._set_busy(False)
 
-    # ------------------------------------------------------------------ #
-    # Вспомогательное
-    # ------------------------------------------------------------------ #
     def _set_busy(self, busy: bool) -> None:
         self.caption_btn.setEnabled(not busy and self._video_path is not None)
         self.choose_btn.setEnabled(not busy)

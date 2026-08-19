@@ -1,9 +1,4 @@
-"""Воркер авторизации в фоновом потоке (QThread).
-
-OAuth2-flow запускает локальный сервер и ждёт ответа в браузере — это может
-занять много времени. Чтобы не блокировать главный поток (что вызывало
-зависание окна при нажатии крестика), авторизация выполняется здесь.
-"""
+"""Воркер OAuth2-авторизации в фоновом потоке, не блокирует UI."""
 from __future__ import annotations
 
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -14,8 +9,8 @@ from app.youtube_client import YouTubeClient
 class AuthWorker(QThread):
     """Выполняет OAuth2-авторизацию YouTube в фоновом потоке."""
 
-    succeeded = pyqtSignal(str)   # имя канала после успешной авторизации
-    failed = pyqtSignal(str)      # сообщение об ошибке (включая 403 access_denied)
+    succeeded = pyqtSignal(str)
+    failed = pyqtSignal(str)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)

@@ -1,8 +1,4 @@
-"""Воркер удаления музыки в отдельном потоке (QThread).
-
-Разделение голос/музыка через Demucs — длительная операция, выполняется в фоне.
-UI общается через сигналы progress / succeeded / failed.
-"""
+"""Воркер удаления музыки в отдельном потоке (QThread)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,11 +9,11 @@ from app.audio_tools import remove_music
 
 
 class AudioWorker(QThread):
-    """Удаляет музыку из видео (оставляя голос) в фоновом потоке."""
+    """Удаляет музыку из видео в фоновом потоке, не блокируя UI."""
 
-    progress = pyqtSignal(int, str)   # (percent, message)
-    succeeded = pyqtSignal(str)       # путь к итоговому файлу
-    failed = pyqtSignal(str)          # сообщение об ошибке
+    progress = pyqtSignal(int, str)
+    succeeded = pyqtSignal(str)
+    failed = pyqtSignal(str)
 
     def __init__(
         self,

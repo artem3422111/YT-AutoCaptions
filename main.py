@@ -1,15 +1,10 @@
-"""ViVideoYouTube — точка входа приложения.
-
-Запуск:  venv/bin/python main.py
-"""
+"""ViVideoYouTube — точка входа. Запуск: venv/bin/python main.py"""
 from __future__ import annotations
 
 import sys
 
 
 def main() -> int:
-    # Импорт PyQt выполняем внутри, чтобы красивые сообщения об ошибках
-    # выводились до старта GUI.
     try:
         from PyQt6.QtWidgets import QApplication
     except ImportError:

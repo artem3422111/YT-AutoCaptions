@@ -1,8 +1,4 @@
-"""Главное окно ViVideoYouTube.
-
-Содержит панель с двумя вкладками («Видео» и «Шортсы»), строку меню
-(авторизация) и статус-бар.
-"""
+"""Главное окно ViVideoYouTube: вкладки, меню авторизации, статус-бар."""
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
@@ -38,9 +34,6 @@ class MainWindow(QMainWindow):
         self._build_menu()
         self._setup_status_bar()
 
-    # ------------------------------------------------------------------ #
-    # UI
-    # ------------------------------------------------------------------ #
     def _build_ui(self) -> None:
         self.tabs = QTabWidget(self)
         self.tabs.setDocumentMode(False)
@@ -77,9 +70,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status)
         self.status.showMessage(f"Готово. Стек: Python · PyQt6 · YouTube Data API")
 
-    # ------------------------------------------------------------------ #
-    # Действия
-    # ------------------------------------------------------------------ #
     def _authorize(self) -> None:
         """Запускает OAuth2-авторизацию в фоновом потоке (откроется браузер)."""
         if self._auth_worker is not None and self._auth_worker.isRunning():
@@ -120,24 +110,18 @@ class MainWindow(QMainWindow):
             )
 
     def closeEvent(self, event) -> None:
-        """Корректное завершение: останавливаем фоновые потоки до закрытия.
-
-        Без этого PyQt может зависнуть, если в момент закрытия окна ещё
-        работает воркер загрузки или авторизации.
-        """
+        """Останавливает фоновые потоки до закрытия окна."""
         self._stop_background_threads()
         event.accept()
         super().closeEvent(event)
 
     def _stop_background_threads(self) -> None:
-        """Останавливает все активные фоновые потоки."""
-        # Воркеры загрузки на вкладках
+        """Останавливает все активные фоновые воркеры."""
         self.video_tab.shutdown()
         self.shorts_tab.shutdown()
         self.caption_tab.shutdown()
         self.music_tab.shutdown()
 
-        # Воркер авторизации
         if self._auth_worker is not None and self._auth_worker.isRunning():
             self._auth_worker.requestInterruption()
             if not self._auth_worker.wait(3000):

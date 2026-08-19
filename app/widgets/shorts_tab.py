@@ -1,9 +1,4 @@
-"""Вкладка «Шортсы» — загрузка вертикальных видео (9:16, до ~3 минут).
-
-Отличается от обычного видео: у неё есть шаблон авто-заполнения для
-аниме-нарезок — пользователь вводит только название аниме и озвучку,
-а название/описание/теги генерируются автоматически.
-"""
+"""Вкладка «Шортсы»: загрузка вертикальных видео с авто-шаблоном аниме."""
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
@@ -26,7 +21,6 @@ class ShortsTab(UploadForm):
 
     def __init__(self, parent=None) -> None:
         super().__init__(is_shorts=True, parent=parent)
-        # Релевантные категории для шортсов; по умолчанию «Films & Animation».
         self.category_combo.clear()
         self.category_combo.addItem("Films & Animation", "1")
         self.category_combo.addItem("People & Blogs", "22")
@@ -35,14 +29,10 @@ class ShortsTab(UploadForm):
         self.category_combo.addItem("Gaming", "20")
         self.category_combo.setCurrentIndex(0)
 
-        # Приватность по умолчанию — «Не перечислено» (безопасно для нарезок).
         index = self.privacy_combo.findData("unlisted")
         if index != -1:
             self.privacy_combo.setCurrentIndex(index)
 
-    # ------------------------------------------------------------------ #
-    # Карточка шаблона
-    # ------------------------------------------------------------------ #
     def _build_anime_card(self) -> QGroupBox:
         box = QGroupBox("Шаблон аниме (автозаполнение)", self)
         grid = QGridLayout(box)
@@ -75,8 +65,7 @@ class ShortsTab(UploadForm):
         return box
 
     def _on_anime_changed(self) -> None:
-        """При вводе названия аниме/озвучки автозаполняем остальные поля."""
-        # Если название аниме ещё пусто — ничего не генерируем.
+        """Автозаполняем поля при вводе названия аниме/озвучки."""
         if not self.anime_name_edit.text().strip():
             return
         self._apply_auto_template()

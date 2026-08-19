@@ -1,15 +1,4 @@
-"""Инструменты обработки аудио: удаление музыки с сохранением голоса и эффектов.
-
-Использует Demucs (htdemucs_6s) для разделения на 6 стемов и собирает итоговую
-дорожку из тех, что нам нужны:
-  - vocals  (голос/озвучка)       -> оставляем
-  - other   (эффекты: шаги, шелест, скрипы) -> оставляем
-  - drums   (ударные; стуки/шаги)  -> оставляем
-  - bass / guitar / piano          -> УБИРАЕМ (это явная музыка)
-
-Итог балансируется так, чтобы максимально сохранить звуковые эффекты, даже если
-лёгкий музыкальный фон останется.
-"""
+"""Удаление музыки через Demucs: оставляет голос и эффекты (vocals, other, drums)."""
 from __future__ import annotations
 
 import subprocess
@@ -17,7 +6,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-# Стемы, которые оставляем (голос + эффекты + ударные)
 KEEP_STEMS = ["vocals", "other", "drums"]
 DEMUCS_MODEL = "htdemucs_6s"
 
@@ -28,11 +16,7 @@ def remove_music(
     progress: callable | None = None,
     device: str = "auto",
 ) -> Path:
-    """Убирает музыку, сохраняя голос и звуковые эффекты.
-
-    progress(stage: str, pct: int) вызывается на этапах.
-    Возвращает путь к итоговому видео.
-    """
+    """Убирает музыку, сохраняя голос и эффекты; возвращает итоговый файл."""
     if out_path is None or out_path == video_path:
         out_path = video_path.with_name(video_path.stem + "_vocals.mp4")
 
@@ -68,7 +52,7 @@ def remove_music(
 
 
 def _demucs_mix(audio_wav: Path, device: str, keep_stems: list[str]) -> Path:
-    """Разделяет на 6 стемов и микширует указанные в единую WAV-дорожку."""
+    """Разделяет на стемы и микширует указанные в единую WAV-дорожку."""
     cmd = _find_demucs()
     demucs_args = [
         *cmd, "-n", DEMUCS_MODEL,
@@ -81,7 +65,6 @@ def _demucs_mix(audio_wav: Path, device: str, keep_stems: list[str]) -> Path:
 
     _run(demucs_args)
 
-    # Демucs: <out>/htdemucs_6s/<wav_stem>/<stem>.wav
     result_dir = audio_wav.parent / DEMUCS_MODEL / audio_wav.stem
     stem_files: list[Path] = []
     for stem in keep_stems:
@@ -96,7 +79,6 @@ def _demucs_mix(audio_wav: Path, device: str, keep_stems: list[str]) -> Path:
     if not stem_files:
         raise RuntimeError("Demucs не создал нужные стемы")
 
-    # Если один стем — просто копируем; иначе микшируем через ffmpeg amix
     if len(stem_files) == 1:
         return stem_files[0]
 

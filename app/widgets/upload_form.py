@@ -1,11 +1,4 @@
-"""Базовый виджет формы загрузки видео / шортсов.
-
-Содержит: выбор видеофайла, название, описание, теги, категорию, приватность,
-превью (thumbnail), настройку "для детей" и кнопку «Загрузить».
-
-Обычное видео и шортсы — это два наследника, которые отличаются пресетом
-категории, подсказками про формат (16:9 vs 9:16) и длительностью.
-"""
+"""Базовый виджет формы загрузки видео/шортсов: выбор файла, детали, превью."""
 from __future__ import annotations
 
 import os
@@ -58,9 +51,6 @@ class UploadForm(QWidget):
 
         self._build_ui()
 
-    # ------------------------------------------------------------------ #
-    # Построение интерфейса
-    # ------------------------------------------------------------------ #
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -68,21 +58,16 @@ class UploadForm(QWidget):
 
         layout.addWidget(self._build_header())
 
-        # --- Доп. карточка шаблона (для шортсов — поля аниме; иначе None) ---
         anime_card = self._build_anime_card()
         if anime_card is not None:
             layout.addWidget(anime_card)
 
-        # --- Карточка с выбором файла ---
         layout.addWidget(self._build_file_card())
 
-        # --- Карточка с деталями ---
         layout.addWidget(self._build_details_card())
 
-        # --- Карточка с настройками ---
         layout.addWidget(self._build_settings_card())
 
-        # --- Статус / прогресс ---
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
         self.progress_bar.setTextVisible(True)
@@ -94,7 +79,6 @@ class UploadForm(QWidget):
         self.status_label.setWordWrap(True)
         layout.addWidget(self.status_label)
 
-        # --- Кнопка загрузки ---
         self.upload_btn = QPushButton(
             "⬆  Загрузить шортс на YouTube" if self.is_shorts else
             "⬆  Загрузить видео на YouTube",
@@ -134,7 +118,6 @@ class UploadForm(QWidget):
         grid.setContentsMargins(14, 16, 14, 14)
         grid.setSpacing(10)
 
-        # Поле с путём выбранного файла
         self.file_path_edit = QLineEdit(box)
         self.file_path_edit.setPlaceholderText(
             "Файл не выбран — нажмите «Выбрать файл»"
@@ -142,13 +125,11 @@ class UploadForm(QWidget):
         self.file_path_edit.setReadOnly(True)
         grid.addWidget(self.file_path_edit, 0, 0, 1, 2)
 
-        # Кнопка выбора файла
         self.choose_btn = QPushButton("📂  Выбрать файл", box)
         self.choose_btn.setObjectName("chooseFileButton")
         self.choose_btn.clicked.connect(self._choose_video_file)
         grid.addWidget(self.choose_btn, 0, 2)
 
-        # Лейбл с именем загруженного файла
         self.file_name_label = QLabel("", box)
         self.file_name_label.setObjectName("fileNameLabel")
         grid.addWidget(self.file_name_label, 1, 0, 1, 3)
@@ -162,7 +143,6 @@ class UploadForm(QWidget):
         grid.setSpacing(10)
         grid.setColumnStretch(1, 1)
 
-        # Название
         grid.addWidget(self._field_label("Название *"), 0, 0)
         self.title_edit = QLineEdit(box)
         self.title_edit.setPlaceholderText("Введите название видео")
@@ -170,26 +150,22 @@ class UploadForm(QWidget):
         self.title_edit.textChanged.connect(self._update_upload_state)
         grid.addWidget(self.title_edit, 0, 1, 1, 2)
 
-        # Описание
         grid.addWidget(self._field_label("Описание"), 1, 0)
         self.desc_edit = QPlainTextEdit(box)
         self.desc_edit.setPlaceholderText("Расскажите, о чём это видео…")
         self.desc_edit.setMaximumHeight(120)
         grid.addWidget(self.desc_edit, 1, 1, 1, 2)
 
-        # Теги
         grid.addWidget(self._field_label("Теги"), 2, 0)
         self.tags_edit = QLineEdit(box)
         self.tags_edit.setPlaceholderText("через запятую: python, туториал, ютуб")
         grid.addWidget(self.tags_edit, 2, 1, 1, 2)
 
-        # Категория
         grid.addWidget(self._field_label("Категория"), 3, 0)
         self.category_combo = QComboBox(box)
         self.category_combo.addItem("People & Blogs", "22")
         grid.addWidget(self.category_combo, 3, 1)
 
-        # Премиум-дополнение: подсказка про категорию для шортсов
         hint = QLabel(
             "Для шортсов YouTube рекомендует категорию «Films & Animation».",
             box,
@@ -210,7 +186,6 @@ class UploadForm(QWidget):
         grid.setSpacing(10)
         grid.setColumnStretch(1, 1)
 
-        # Приватность
         grid.addWidget(self._field_label("Видимость"), 0, 0)
         self.privacy_combo = QComboBox(box)
         for label, value in (
@@ -221,7 +196,6 @@ class UploadForm(QWidget):
             self.privacy_combo.addItem(label, value)
         grid.addWidget(self.privacy_combo, 0, 1, 1, 2)
 
-        # Превью (thumbnail)
         grid.addWidget(self._field_label("Превью (мин. 1280×720)"), 1, 0)
         self.thumbnail_edit = QLineEdit(box)
         self.thumbnail_edit.setPlaceholderText("Необязательно")
@@ -232,11 +206,9 @@ class UploadForm(QWidget):
         self.thumbnail_btn.clicked.connect(self._choose_thumbnail)
         grid.addWidget(self.thumbnail_btn, 1, 2)
 
-        # Для детей
         self.kids_check = QCheckBox("Это видео для детей", box)
         grid.addWidget(self.kids_check, 2, 1, 1, 2)
 
-        # Удаление музыки (Demucs)
         self.no_music_check = QCheckBox(
             "🎵 Убрать музыку (оставить голос и эффекты)", box
         )
@@ -255,9 +227,6 @@ class UploadForm(QWidget):
         label.setObjectName("fieldLabel")
         return label
 
-    # ------------------------------------------------------------------ #
-    # Шаблон авто-заполнения (переопределяется в наследниках)
-    # ------------------------------------------------------------------ #
     def _build_anime_card(self):
         """Возвращает виджет с шаблоном, либо None (обычное видео)."""
         return None
@@ -267,9 +236,6 @@ class UploadForm(QWidget):
         pass
 
 
-    # ------------------------------------------------------------------ #
-    # Выбор файлов
-    # ------------------------------------------------------------------ #
     def _choose_video_file(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите видеофайл", str(Path.home()), VIDEO_EXTENSIONS
@@ -288,8 +254,6 @@ class UploadForm(QWidget):
         self._video_path = path
         self.file_path_edit.setText(str(path))
 
-        # Подставляем имя файла (без расширения) как название по умолчанию,
-        # если пользователь ещё не вводил своё.
         if not self.title_edit.text().strip():
             self.title_edit.setText(path.stem.replace("_", " ").replace("-", " "))
 
@@ -314,9 +278,6 @@ class UploadForm(QWidget):
             size /= 1024
         return f"{size:.1f} ТБ"
 
-    # ------------------------------------------------------------------ #
-    # Состояние / валидация
-    # ------------------------------------------------------------------ #
     def _update_upload_state(self) -> None:
         has_video = self._video_path is not None
         has_title = bool(self.title_edit.text().strip())
@@ -373,9 +334,6 @@ class UploadForm(QWidget):
             return None
 
 
-    # ------------------------------------------------------------------ #
-    # Загрузка
-    # ------------------------------------------------------------------ #
     def _on_upload_clicked(self) -> None:
         error = self._validate()
         if error:
@@ -452,14 +410,11 @@ class UploadForm(QWidget):
         for worker in (self._worker, self._audio_worker):
             if worker is not None and worker.isRunning():
                 worker.requestInterruption()
-                if not worker.wait(3000):  # 3 секунды на мягкое завершение
+                if not worker.wait(3000):
                     worker.terminate()
                     worker.wait(1000)
 
 
-    # ------------------------------------------------------------------ #
-    # Обработчики сигналов воркера
-    # ------------------------------------------------------------------ #
     def _on_progress(self, percent: int, message: str) -> None:
         self.progress_bar.setValue(percent)
         self._set_status(f"{message} ({percent}%)")
@@ -468,7 +423,6 @@ class UploadForm(QWidget):
 
     def _on_success(self, result: UploadResult) -> None:
         self._set_status(f"🎉 Видео загружено: {result.title}")
-        # Показываем ссылку на видео
         self.status_label.setText(
             f"🎉 Видео загружено: {result.title}\nСсылка: {result.url}"
         )
@@ -484,9 +438,6 @@ class UploadForm(QWidget):
     def _on_worker_finished(self) -> None:
         self._set_busy(False)
 
-    # ------------------------------------------------------------------ #
-    # Вспомогательное
-    # ------------------------------------------------------------------ #
     def _set_busy(self, busy: bool, message: str = "") -> None:
         self.upload_btn.setEnabled(not busy)
         self.choose_btn.setEnabled(not busy)
@@ -505,7 +456,6 @@ class UploadForm(QWidget):
         self.status_label.setText(message)
 
 
-# Импорт палитры здесь, чтобы избежать циклического импорта
 from app.theme import Palette as _Palette  # noqa: E402
 
 PALETTE_SUCCESS = _Palette.SUCCESS

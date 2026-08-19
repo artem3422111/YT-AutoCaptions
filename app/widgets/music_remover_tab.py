@@ -1,8 +1,4 @@
-"""Вкладка «Убрать музыку» — разделение голоса и музыки (Demucs).
-
-Пользователь выбирает видео, нажимает кнопку — Demucs убирает музыку/саундтрек,
-оставляя голос/озвучку. Результат сохраняется как <имя>_vocals.mp4.
-"""
+"""Вкладка «Убрать музыку»: разделение голоса и музыки через Demucs."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -106,9 +102,6 @@ class MusicRemoverTab(QWidget):
 
         return box
 
-    # ------------------------------------------------------------------ #
-    # Выбор файла
-    # ------------------------------------------------------------------ #
     def _choose_video(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите видео", str(Path.home()), VIDEO_EXTENSIONS
@@ -120,9 +113,6 @@ class MusicRemoverTab(QWidget):
         self.remove_btn.setEnabled(True)
         self.result_label.setText("")
 
-    # ------------------------------------------------------------------ #
-    # Запуск
-    # ------------------------------------------------------------------ #
     def _on_remove_clicked(self) -> None:
         if not self._video_path or not self._video_path.exists():
             self._set_status("Сначала выберите видеофайл.", error=True)
@@ -168,9 +158,6 @@ class MusicRemoverTab(QWidget):
     def _on_finished(self) -> None:
         self._set_busy(False)
 
-    # ------------------------------------------------------------------ #
-    # Вспомогательное
-    # ------------------------------------------------------------------ #
     def _set_busy(self, busy: bool) -> None:
         self.remove_btn.setEnabled(not busy and self._video_path is not None)
         self.choose_btn.setEnabled(not busy)

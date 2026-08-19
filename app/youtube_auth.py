@@ -1,15 +1,4 @@
-"""OAuth2-авторизация YouTube Data API.
-
-Читает client_secret JSON (installed app), запускает flow через локальный
-HTTP-сервер на localhost (как в redirect_uris клиента), получает refresh-токен
-и сохраняет его в token.json. При последующих запусках токен переиспользуется.
-
-Важно:
-  - has_saved_token()  — быстрая локальная проверка наличия сохранённого токена
-    (без сети и без запуска браузера).
-  - get_credentials()  — только при явном запросе: если токена нет, запускает
-    интерактивный OAuth flow (открывает браузер и ждёт ответа пользователя).
-"""
+"""OAuth2-авторизация YouTube Data API: запускает оаuth-flow и хранит token.json."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -30,27 +19,16 @@ class YouTubeAuth:
 
     @property
     def has_saved_token(self) -> bool:
-        """True, если существует ранее сохранённый файл токена.
-
-        Это чисто локальная проверка: не читает сеть и не запускает браузер.
-        """
+        """True, если есть ранее сохранённый файл токена (без сети и браузера)."""
         return self._token_file.exists()
 
     @property
     def has_credentials(self) -> bool:
-        """True, если есть (валидные либо готовые к обновлению) credentials.
-
-        Выполняется быстро — загружает сохранённый токен без сети.
-        """
+        """True, если есть валидные либо готовые к обновлению credentials."""
         return self.get_credentials(interactive=False) is not None
 
     def get_credentials(self, interactive: bool = True) -> Credentials | None:
-        """Возвращает валидные credentials.
-
-        Параметр avoids_flow=True вернёт credentials ТОЛЬКО если уже есть
-        сохранённый токен; иначе None (не запускает OAuth-браузер).
-        interactive=False — то же самое, но без запуска интерактивного flow.
-        """
+        """Возвращает валидные credentials, при необходимости запуская OAuth-браузер."""
         if self._creds is not None:
             return self._creds
 
@@ -59,7 +37,6 @@ class YouTubeAuth:
             self._creds = loaded
             return self._creds
 
-        # Токен есть, но истёк — обновляем (может сделать сетевой запрос).
         if loaded is not None and loaded.expired and loaded.refresh_token:
             self._creds = self._try_refresh(loaded)
             if self._creds is not None:
@@ -68,7 +45,6 @@ class YouTubeAuth:
         if not interactive:
             return None
 
-        # Токена нет вовсе — запускаем интерактивный flow.
         self._creds = self._create_flow_credentials()
         return self._creds
 
@@ -77,7 +53,7 @@ class YouTubeAuth:
         return bool(creds and creds.valid)
 
     def _load_saved_token(self, refresh_if_needed: bool) -> Credentials | None:
-        """Читает ранее сохранённый token.json без сетевых вызовов."""
+        """Читает сохранённый token.json без сетевых вызовов."""
         if not self._token_file.exists():
             return None
         try:

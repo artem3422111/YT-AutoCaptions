@@ -1,12 +1,6 @@
-"""Авто-капшен: распознавание речи и встраивание karaoke-субтитров в видео.
+"""Авто-капшен: распознавание речи (faster-whisper) и встраивание karaoke-субтитров.
 
-Используется как отдельной вкладкой «Субтитры». Реализовано поверх
-faster-whisper (word_timestamps -> точные тайминги каждого слова) и ffmpeg.
-
-Karaoke-эффект (как просил пользователь):
-  - слово, которое сейчас произносится  -> ЖЁЛТЫЙ
-  - остальные слова в строке             -> БЕЛЫЙ
-  - текст по центру видео, на тёмной полосе с обводкой.
+Активное слово подсвечивается жёлтым точно по таймкоду (ASS \\kf), остальные — белые.
 """
 from __future__ import annotations
 
@@ -16,8 +10,6 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-# --- Коэффициенты оценки времени: сколько реального времени (в долях длины
-# видео) занимает обработка на CPU (int8). 1.0 = столько же, сколько длится видео.
 SPEED_FACTORS: dict[str, float] = {
     "tiny": 0.25,
     "base": 0.6,
@@ -31,9 +23,8 @@ MODEL_LABELS: dict[str, str] = {
     "medium": "Максимально (medium)",
 }
 
-# Цвета ASS (BGR, &HAA BB GG RR)
-COLOR_ACTIVE = "&H0000FFFF"   # жёлтый — текущее слово
-COLOR_PASSIVE = "&H00FFFFFF"  # белый — остальные слова
+COLOR_ACTIVE = "&H0000FFFF"
+COLOR_PASSIVE = "&H00FFFFFF"
 
 
 @dataclass
@@ -85,7 +76,7 @@ def estimate_time(video_path: Path, model: str) -> str:
     if duration <= 0:
         return "не удалось определить длительность"
     factor = SPEED_FACTORS.get(model, 1.0)
-    work = duration * factor  # ~секунд реального времени
+    work = duration * factor
     low = max(5.0, work * 0.6)
     high = max(8.0, work * 1.6)
     return _fmt_range(low, high)
@@ -107,11 +98,7 @@ def caption_video(
     progress: callable | None = None,
     keep: bool = False,
 ) -> Path:
-    """Полный конвейер капшена с прогресс-колбэком.
-
-    progress(stage: str, pct: int) вызывается на каждом этапе.
-    Возвращает путь к итоговому видео с встроенными субтитрами.
-    """
+    """Распознаёт речь и встраивает karaoke-субтитры; возвращает итоговый файл."""
     if out is None:
         out = video.with_name(video.stem + "_captioned.mp4")
 
@@ -185,11 +172,8 @@ def transcribe(audio_path: Path, model_size: str, lang: str | None) -> list[Line
 
 
 def build_ass(lines: list[Line], font: str, font_size: int) -> str:
-    """ASS-субтитры: жёлтое активное слово, белые остальные, по центру.
-
-    Строки разбиваются по длине символов, чтобы текст не вылезал за края.
-    """
-    MAX_CHARS = 30  # макс. символов в одной строке субтитра
+    """Собирает ASS-файл: активное слово жёлтым, остальные белые, по центру."""
+    MAX_CHARS = 30
     headers = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920
@@ -217,7 +201,6 @@ def _split_by_chars(line: Line, max_chars: int) -> list[Line]:
     current: list[Word] = []
     length = 0
     for word in line.words:
-        # длина слова + пробел
         add = len(word.text) + 1
         if current and length + add > max_chars:
             chunks.append(Line(current))
@@ -231,18 +214,12 @@ def _split_by_chars(line: Line, max_chars: int) -> list[Line]:
 
 
 def _karaoke_event(line: Line) -> str:
-    """Karaoke-событие: текущее слово подсвечивается жёлтым точно по времени.
-
-    Используем ТОЛЬКО тег \\\\kf (длительность слова в сотых секунды).
-    Сумма \\\\kf по строке равна длительности показа события, поэтому libass
-    подсвечивает каждое слово в момент, когда оно звучит (нет сдвигов).
-    """
+    """Karaoke-событие: подсветка текущего слова жёлтым точно по времени."""
     pieces: list[str] = []
     for word in line.words:
         dur_ms = int((word.end - word.start) * 100)
         dur_ms = max(1, dur_ms)
         pieces.append(f"{{\\kf{dur_ms}}}{word.text}")
-    # пробелы между словами (вне тегов — всегда белые)
     body = " ".join(pieces)
     return (
         f"Dialogue: 0,{_srt_ts(line.start)},{_srt_ts(line.end)},"

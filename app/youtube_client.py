@@ -1,8 +1,4 @@
-"""Клиент YouTube Data API для загрузки видео и шортсов.
-
-Использует OAuth2 credentials для авторизованных запросов (upload/insert)
-и API Key для публичных query-запросов.
-"""
+"""Клиент YouTube Data API для загрузки видео и шортсов (OAuth2 + API Key)."""
 from __future__ import annotations
 
 import mimetypes
@@ -31,11 +27,8 @@ class YouTubeClient:
         self._auth = YouTubeAuth()
         self._youtube = None
 
-    # ------------------------------------------------------------------ #
-    # Сборка / авторизация
-    # ------------------------------------------------------------------ #
     def build_client(self) -> None:
-        """Собирает (или пересобирает) клиент YouTube с валидными credentials."""
+        """Собирает клиент YouTube с валидными credentials."""
         creds = self._auth.get_credentials()
         if not creds:
             raise PermissionError(
@@ -51,16 +44,13 @@ class YouTubeClient:
 
     @property
     def is_authorized(self) -> bool:
-        """True, если есть (валидные либо готовые к обновлению) credentials."""
+        """True, если есть валидные либо готовые к обновлению credentials."""
         return self._auth.has_credentials
 
     def auth_needs_refresh(self) -> bool:
         """True, если токен ещё не создан (нужно первично авторизоваться)."""
         return not self._auth.has_credentials
 
-    # ------------------------------------------------------------------ #
-    # Загрузка
-    # ------------------------------------------------------------------ #
     def upload_video(
         self,
         video_path: str | Path,
@@ -75,11 +65,7 @@ class YouTubeClient:
         publish_at: str | None = None,
         progress_callback=None,
     ) -> UploadResult:
-        """Загружает видео на YouTube.
-
-        progress_callback(percent: int, message: str) вызывается по мере
-        прохождения этапов (для обновления UI).
-        """
+        """Загружает видео на YouTube; progress_callback обновляет UI."""
         return self._upload(
             video_path=video_path,
             title=title,
@@ -94,9 +80,6 @@ class YouTubeClient:
             progress_callback=progress_callback,
         )
 
-    # ------------------------------------------------------------------ #
-    # Внутренняя реализация
-    # ------------------------------------------------------------------ #
     def _upload(
         self,
         video_path: str | Path,
@@ -156,7 +139,6 @@ class YouTubeClient:
 
         video_id = response.get("id")
 
-        # Загрузка превью (thumbnail) — опционально
         if thumbnail_path:
             thumb = Path(thumbnail_path)
             if thumb.exists():
@@ -166,7 +148,7 @@ class YouTubeClient:
                         media_body=MediaFileUpload(str(thumb), mimetype="image/*"),
                     ).execute()
                 except HttpError:
-                    pass  # минорная ошибка — не прерываем загрузку
+                    pass
 
         if progress_callback:
             progress_callback(100, "Готово!")
@@ -188,9 +170,6 @@ class YouTubeClient:
         return response
 
 
-    # ------------------------------------------------------------------ #
-    # Публичные query-запросы
-    # ------------------------------------------------------------------ #
     def get_uploaded_videos(self, max_results: int = 50) -> list[dict]:
         """Возвращает список недавно загруженных видео текущего пользователя."""
         youtube = self.get_youtube()

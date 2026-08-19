@@ -1,33 +1,27 @@
-"""Тёмная тема приложения (QSS + палитра цветов).
-
-Акцентный цвет — фирменный красный YouTube (#F03A17 / #FF0000).
-Тёмные фоны, стилизованные кнопки, поля ввода, вкладки.
-"""
+"""Тёмная тема приложения (QSS + палитра, акцент — красный YouTube)."""
 
 from __future__ import annotations
 
 
 class Palette:
-    """Палитра — используется как напрямую в QSS, так и в коде
-    (для градиентов, hover и т.п.)."""
+    """Палитра цветов, используется в QSS и в коде."""
 
-    BG_DARK = "#121212"          # основной фон окна
-    BG_PANEL = "#1E1E1E"         # фон панелей / карточек
-    BG_INPUT = "#2A2A2A"         # фон полей ввода
-    BG_HOVER = "#333333"         # hover для полей
-    BORDER = "#3A3A3A"           # цвет рамок
-    BORDER_FOCUS = "#F03A17"     # рамка при фокусе
-    TEXT = "#F1F1F1"             # основной текст
-    TEXT_MUTED = "#9E9E9E"       # приглушённый текст (подписи, placeholders)
-    ACCENT = "#F03A17"           # акцентный красный (кнопка загрузки)
-    ACCENT_HOVER = "#FF4D2E"     # ховер акцентной кнопки
-    ACCENT_PRESSED = "#D62E0F"   # нажатие акцентной кнопки
-    SUCCESS = "#2EBD59"          # зелёный — статус успеха
-    ERROR = "#E53935"            # красный — ошибка
-    WARN = "#FFB300"             # жёлтый — предупреждение
-    SELECTED = "#2A3B52"         # выделенный пункт (вкладки/списки)
+    BG_DARK = "#121212"
+    BG_PANEL = "#1E1E1E"
+    BG_INPUT = "#2A2A2A"
+    BG_HOVER = "#333333"
+    BORDER = "#3A3A3A"
+    BORDER_FOCUS = "#F03A17"
+    TEXT = "#F1F1F1"
+    TEXT_MUTED = "#9E9E9E"
+    ACCENT = "#F03A17"
+    ACCENT_HOVER = "#FF4D2E"
+    ACCENT_PRESSED = "#D62E0F"
+    SUCCESS = "#2EBD59"
+    ERROR = "#E53935"
+    WARN = "#FFB300"
+    SELECTED = "#2A3B52"
 
-# Полный QSS-стиль приложения
 QSS = f"""
 * {{
     font-family: "Segoe UI", "Roboto", "Noto Sans", sans-serif;
@@ -44,7 +38,6 @@ QWidget {{
     background-color: transparent;
 }}
 
-/* ---------- Вкладки ---------- */
 QTabWidget::pane {{
     border: 1px solid {Palette.BORDER};
     border-radius: 8px;
@@ -75,7 +68,6 @@ QTabBar::tab:selected {{
     border-bottom: 3px solid {Palette.ACCENT};
 }}
 
-/* ---------- Кнопки ---------- */
 QPushButton {{
     background-color: {Palette.BG_INPUT};
     border: 1px solid {Palette.BORDER};
@@ -100,7 +92,6 @@ QPushButton:disabled {{
     border-color: {Palette.BORDER};
 }}
 
-/* Акцентная кнопка (загрузка) */
 QPushButton#accentButton {{
     background-color: {Palette.ACCENT};
     border: none;
@@ -124,7 +115,6 @@ QPushButton#accentButton:disabled {{
     color: {Palette.TEXT_MUTED};
 }}
 
-/* ---------- Поля ввода ---------- */
 QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox {{
     background-color: {Palette.BG_INPUT};
     border: 1px solid {Palette.BORDER};
@@ -155,7 +145,6 @@ QComboBox QAbstractItemView {{
     selection-color: {Palette.TEXT};
 }}
 
-/* ---------- Чекбоксы / радио ---------- */
 QCheckBox, QRadioButton {{
     spacing: 8px;
 }}
@@ -182,7 +171,6 @@ QRadioButton::indicator:checked {{
     border-color: {Palette.ACCENT};
 }}
 
-/* ---------- Прогресс-бар ---------- */
 QProgressBar {{
     border: 1px solid {Palette.BORDER};
     border-radius: 6px;
@@ -197,7 +185,6 @@ QProgressBar::chunk {{
     border-radius: 5px;
 }}
 
-/* ---------- Scroll-бары ---------- */
 QScrollBar:vertical {{
     background: {Palette.BG_PANEL};
     width: 12px;
@@ -233,7 +220,6 @@ QScrollBar::add-page, QScrollBar::sub-page {{
     background: none;
 }}
 
-/* ---------- Лейблы ---------- */
 QLabel#titleLabel {{
     font-size: 20px;
     font-weight: 700;
@@ -267,7 +253,6 @@ QLabel#errorLabel {{
     color: {Palette.ERROR};
 }}
 
-/* ---------- Группы / Карточки ---------- */
 QGroupBox {{
     border: 1px solid {Palette.BORDER};
     border-radius: 8px;
@@ -290,7 +275,6 @@ QFrame#card {{
     border-radius: 8px;
 }}
 
-/* ---------- Меню ---------- */
 QMenuBar {{
     background-color: {Palette.BG_DARK};
     border-bottom: 1px solid {Palette.BORDER};
@@ -326,14 +310,12 @@ QMenu::separator {{
     margin: 4px 8px;
 }}
 
-/* ---------- Status bar ---------- */
 QStatusBar {{
     background-color: {Palette.BG_PANEL};
     border-top: 1px solid {Palette.BORDER};
     color: {Palette.TEXT_MUTED};
 }}
 
-/* ---------- Списки / таблицы ---------- */
 QListWidget, QTreeWidget, QTableWidget {{
     background-color: {Palette.BG_INPUT};
     border: 1px solid {Palette.BORDER};
