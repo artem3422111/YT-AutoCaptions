@@ -39,6 +39,25 @@ class Config:
     REDIRECT_URI: str = "http://localhost"
     APP_NAME: str = "ViVideoYouTube"
 
+    # --- Шаблон авто-метаданных для шортсов (настраивается через .env) ---
+    SHORTS_SITE_URL: str = os.getenv("SHORTS_SITE_URL", "")
+    SHORTS_TG_URL: str = os.getenv("SHORTS_TG_URL", "")
+    # Путь к файлу-шаблону со всеми строками шортса (пусто = встроенные дефолты)
+    SHORTS_TEMPLATE_FILE: Path | None = (
+        (BASE_DIR / os.getenv("SHORTS_TEMPLATE_FILE")).resolve()
+        if os.getenv("SHORTS_TEMPLATE_FILE")
+        else None
+    )
+    SHORTS_BASE_TAGS: list[str] = [
+        t.strip()
+        for t in os.getenv(
+            "SHORTS_BASE_TAGS",
+            "аниме,анимешортс,аниме нарезка,аниме моменты,аниме эдиты,"
+            "аниме 60 секунд,shorts,anime,anime shorts",
+        ).split(",")
+        if t.strip()
+    ]
+
     @classmethod
     def load_client_secret(cls) -> dict:
         """Возвращает JSON с OAuth-данными Google (installed app)."""

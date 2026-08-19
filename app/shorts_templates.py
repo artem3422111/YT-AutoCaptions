@@ -1,20 +1,14 @@
-"""Авто-генерация метаданных (название, описание, теги) для аниме-шортсов."""
+"""Авто-генерация метаданных (название, описание, теги) для аниме-шортсов.
+
+Поддерживает полную настройку шаблона через файл shorts_template.txt
+(см. shorts_template.txt.example). Если файл не задан — используются
+значения из .env и встроенные заготовки.
+"""
 from __future__ import annotations
 
-SITE_URL = "vilibrity.ru"
-TG_URL = "https://t.me/VilibrityOfficial"
+from pathlib import Path
 
-BASE_TAGS = [
-    "аниме",
-    "анимешортс",
-    "аниме нарезка",
-    "аниме моменты",
-    "аниме эдиты",
-    "аниме 60 секунд",
-    "shorts",
-    "anime",
-    "anime shorts",
-]
+from app.config import config
 
 
 def generate_shorts_metadata(
@@ -24,32 +18,121 @@ def generate_shorts_metadata(
     anime_name = anime_name.strip()
     dubbing = dubbing.strip()
 
+    if config.SHORTS_TEMPLATE_FILE and config.SHORTS_TEMPLATE_FILE.exists():
+        return _from_template_file(config.SHORTS_TEMPLATE_FILE, anime_name, dubbing)
+    return _builtin(anime_name, dubbing)
+
+
+def _from_template_file(
+    path: Path, anime_name: str, dubbing: str
+) -> tuple[str, str, list[str]]:
+    """Читает пользовательский шаблон и подставляет значения."""
+    sections = _parse_template(path)
+    tags = _split_tags(sections.get("TAGS", []))
+
+    placeholders = {
+        "anime": anime_name,
+        "dubbing": dubbing,
+        "site": config.SHORTS_SITE_URL,
+        "tg": config.SHORTS_TG_URL,
+        "tags": _tags_to_hashtag(tags),
+    }
+
+    title = _render(sections.get("TITLE", [""]), placeholders)
+    description = _render(sections.get("DESCRIPTION", []), placeholders)
+    result_tags = list(tags)
+    result_tags.extend(_title_variants(anime_name, dubbing))
+    return title, description, _unique(result_tags)[:100]
+
+
+def _builtin(anime_name: str, dubbing: str) -> tuple[str, str, list[str]]:
+    """Встроенная генерация (когда пользователь не создал файл-шаблон)."""
     if dubbing:
         title = f"«{anime_name}» — нарезка | {dubbing}"
     else:
         title = f"«{anime_name}» — нарезка"
 
-    lines = [f"«{anime_name}» — нарезка" + (" 🔥" if not dubbing else " 🔥")]
+    lines = [f"«{anime_name}» — нарезка"]
     if dubbing:
         lines.append(f"Озвучка: {dubbing}")
     lines.append("")
-    lines.append(f"🎬 Наш сайт: {SITE_URL}")
-    lines.append(f"📢 Телеграм: {TG_URL}")
+    if config.SHORTS_SITE_URL:
+        lines.append(f"🎬 Наш сайт: {config.SHORTS_SITE_URL}")
+    if config.SHORTS_TG_URL:
+        lines.append(f"📢 Телеграм: {config.SHORTS_TG_URL}")
     lines.append("Подпишись на канал! ❤️")
     lines.append("")
     lines.append("#аниме #анимешортс #аниме_нарезка")
     description = "\n".join(lines)
 
-    tags = list(BASE_TAGS)
+    tags = list(config.SHORTS_BASE_TAGS)
     tags.extend(_title_variants(anime_name, dubbing))
+    return title, description, _unique(tags)[:100]
+
+
+def _parse_template(path: Path) -> dict[str, list[str]]:
+    """Разбирает файл на секции TITLE / DESCRIPTION / TAGS."""
+    sections: dict[str, list[str]] = {}
+    current: str | None = None
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        upper = line.strip().upper()
+        if upper in ("TITLE:", "DESCRIPTION:", "TAGS:"):
+            current = upper[:-1]
+            sections.setdefault(current, [])
+            continue
+        if current:
+            sections[current].append(line)
+    # убираем лишние пустые строки по краям title/description
+    for key in ("TITLE", "DESCRIPTION"):
+        if key in sections:
+            sections[key] = _trim_edges(sections[key])
+    return sections
+
+
+def _trim_edges(lines: list[str]) -> list[str]:
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return lines
+
+
+def _render(lines: list[str], placeholders: dict[str, str]) -> str:
+    """Форматирует строки плейсхолдерами и объединяет в текст."""
+    rendered: list[str] = []
+    for line in lines:
+        for key, value in placeholders.items():
+            line = line.replace("{" + key + "}", value)
+        rendered.append(line)
+    return "\n".join(rendered)
+
+
+def _split_tags(raw: list[str]) -> list[str]:
+    """Разбирает строки секции TAGS в список тегов (запятые и переносы строк)."""
+    tags: list[str] = []
+    for chunk in raw:
+        for part in chunk.replace(",", "\n").splitlines():
+            tag = part.strip()
+            if tag:
+                tags.append(tag)
+    return tags
+
+
+def _tags_to_hashtag(tags: list[str]) -> str:
+    """Превращает теги в строку хэштегов: ['аниме','shorts'] -> '#аниме #shorts'."""
+    return " ".join(f"#{t}" for t in tags)
+
+
+def _unique(items: list[str]) -> list[str]:
     seen: set[str] = set()
-    unique: list[str] = []
-    for t in tags:
+    result: list[str] = []
+    for t in items:
         key = t.lower()
         if key not in seen:
             seen.add(key)
-            unique.append(t)
-    return title, description, unique[:100]
+            result.append(t)
+    return result
 
 
 def _title_variants(name: str, dubbing: str) -> list[str]:

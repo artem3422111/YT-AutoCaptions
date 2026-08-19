@@ -11,6 +11,9 @@ token-*.json
 *client_secret*.json
 key.txt
 
+# Личный файл-шаблон шортсов (эталон — shorts_template.txt.example)
+shorts_template.txt
+
 # ===== Виртуальное окружение =====
 venv/
 .venv/
