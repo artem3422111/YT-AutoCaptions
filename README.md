@@ -116,6 +116,102 @@ https://download.pytorch.org/whl/cu126`.
 Откроется браузер — подтвердите доступ. Токен сохранится в `token.json`
 (создаётся автоматически в корне проекта) и не будет запрошен повторно.
 
+### Как получить Client ID / Client Secret и «разрешить» приложению загружать видео
+
+Эти шаги нужны **один раз** — чтобы приложение могло загружать видео на ваш канал.
+
+**Шаг 1. Откройте Google Cloud Console**
+
+Перейдите на сайт:
+👉 **https://console.cloud.google.com/**
+
+Войдите тем Google-аккаунтом, на который хотите загружать видео (это должен быть
+владелец/менеджер **вашего канала**).
+
+**Шаг 2. Выберите (или создайте) проект**
+
+- Вверху слева нажмите на выпадающий список **проектов** (рядом с логотипом).
+- Выберите нужный проект или создайте новый (**New Project** → задайте имя → **Create**).
+
+**Шаг 3. Включите «YouTube Data API v3»**
+
+- В левом меню откройте **APIs & Services → Library** (или **Библиотека**).
+- В строке поиска введите `YouTube Data API`.
+- Выберите **«YouTube Data API v3»** → нажмите **Enable** (Включить).
+
+**Шаг 4. Создайте OAuth Client ID (Client ID и Client Secret)**
+
+- В левом меню откройте **APIs & Services → Credentials** (Учётные данные).
+- Нажмите **+ Create Credentials** (Создать учетные данные) → **OAuth client ID**.
+- Если система попросит настроить «OAuth consent screen» (Экран согласия):
+  - нажмите **Configure consent screen**;
+  - выберите тип **External** (Внешний) → **Create**;
+  - заполните минимум: **App name** (например, `ViVideoYouTube`) и **User support email**;
+  - ниже обязательно добавьте свой email в **Developer contact information**;
+  - **Save and continue** до конца (разрешения оставьте как есть) → вернётесь к созданию клиента.
+- В форме **Create OAuth client ID**:
+  - **Application type** → выберите **Desktop app**;
+  - **Name** → любое (например, `ViVideoYouTube Desktop`);
+  - нажмите **Create**.
+- Появится окно с **Client ID** и **Client Secret** — скопируйте их.
+
+**Шаг 5. Скачайте файл `client_secret_*.json`**
+
+- На той же странице **Credentials** в списке клиентов нажмите **скачать**
+  (иконка ⬇ / **Download JSON**) у созданного OAuth-клиента.
+- Положите скачанный файл в **корень проекта** рядом с `main.py`.
+
+**Шаг 6. Пропишите данные в `token.json`-генерацию через `.env`**
+
+Скопируйте шаблон и впишите свои значения:
+
+```bash
+cp .env.example .env
+```
+
+```ini
+# .env
+CLIENT_ID=ваш_client_id
+CLIENT_SECRET=ваш_client_secret
+CLIENT_SECRET_FILE=client_secret_<ваш_client_id>.json
+```
+
+> имена `client_id` и `client_secret` берите из скачанного
+> `client_secret_*.json` или из окна «Create OAuth client ID».
+
+**Шаг 7. Добавьте свой аккаунт в тестовые пользователи (обязательно!)**
+
+Приложение обычно в **тестовом режиме** (Testing), поэтому без верификации Google
+разрешит доступ только тем аккаунтам, которые добавлены в **Test users**:
+
+1. В Google Cloud Console откройте **APIs & Services → OAuth consent screen**.
+2. В разделе **Test users** нажмите **+ Add users**.
+3. Впишите email того аккаунта, под которым будете загружать видео.
+4. **Save**. Изменения вступают в силу практически сразу.
+
+> Если этого не сделать, при авторизации появится ошибка **403 access_denied**
+> или «Access blocked» — просто добавьте аккаунт в Test users и повторите.
+
+**Шаг 8. Авторизуйтесь в приложении**
+
+Запустите приложение и нажмите **Приложение → 🔑 Авторизация в YouTube**.
+Откроется браузер → войдите нужным аккаунтом → подтвердите разрешения.
+Токен сохранится в `token.json`, и повторно авторизоваться не придётся.
+
+### Куда именно вставить данные — краткая шпаргалка
+
+| Что нужно | Где взять (сайт → меню) |
+|-----------|--------------------------|
+| Проект | console.cloud.google.com → список проектов (слева вверху) |
+| Включить API | **APIs & Services → Library** → `YouTube Data API v3` → **Enable** |
+| Client ID / Secret | **APIs & Services → Credentials** → **Create Credentials** → **OAuth client ID** → **Desktop app** |
+| Скачать JSON | **APIs & Services → Credentials** → ⬇ у строки клиента |
+| Добавить тест-пользователя | **APIs & Services → OAuth consent screen** → **Test users** → **Add users** |
+
+> ⚠️ Client ID / Client Secret — это ваши секретные данные (доступ к проекту).
+> Никому их не показывайте и не коммитьте в git (они исключены через
+> `.gitignore`).
+
 ## Файлы конфигурации
 
 | Файл | Назначение |
