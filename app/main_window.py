@@ -1,9 +1,13 @@
 """Главное окно ViVideoYouTube: вкладки, меню авторизации, статус-бар."""
 from __future__ import annotations
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QMainWindow,
+    QFrame,
+    QScrollArea,
     QStatusBar,
+    QWidget,
     QTabWidget,
 )
 
@@ -43,13 +47,24 @@ class MainWindow(QMainWindow):
         self.shorts_tab = ShortsTab(self)
         self.caption_tab = CaptionTab(self)
         self.music_tab = MusicRemoverTab(self)
-
-        self.tabs.addTab(self.video_tab, "🎬  Видео")
-        self.tabs.addTab(self.shorts_tab, "⚡  Шортсы")
-        self.tabs.addTab(self.caption_tab, "💬  Субтитры")
-        self.tabs.addTab(self.music_tab, "🎵  Убрать музыку")
+        
+        self.tabs.addTab(self._scrolled(self.video_tab), "🎬  Видео")
+        self.tabs.addTab(self._scrolled(self.shorts_tab), "⚡  Шортсы")
+        self.tabs.addTab(self._scrolled(self.caption_tab), "💬  Субтитры")
+        self.tabs.addTab(self._scrolled(self.music_tab), "🎵  Убрать музыку")
 
         self.setCentralWidget(self.tabs)
+
+    @staticmethod
+    def _scrolled(widget: QWidget) -> QScrollArea:
+        """Оборачивает виджет в QScrollArea без рамки (скролл по вертикали)."""
+        scroll = QScrollArea()
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(widget)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        return scroll
 
     def _build_menu(self) -> None:
         menubar = self.menuBar()
