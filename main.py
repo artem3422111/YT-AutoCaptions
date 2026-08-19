@@ -1,4 +1,4 @@
-"""ViVideoYouTube — точка входа. Запуск: venv/bin/python main.py"""
+"""YT-AutoCaptions — точка входа. Запуск: venv/bin/python main.py"""
 from __future__ import annotations
 
 import sys
@@ -19,7 +19,7 @@ def main() -> int:
     from app.theme import QSS
 
     app = QApplication(sys.argv)
-    app.setApplicationName("ViVideoYouTube")
+    app.setApplicationName("YT-AutoCaptions")
     app.setStyleSheet(QSS)
 
     window = MainWindow()
