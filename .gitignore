@@ -1,0 +1,55 @@
+# ===== Секреты и конфигурация — НЕ КОММИТИМ =====
+# Реальные ключи, токены и OAuth-данные
+.env
+*.env
+.env.*
+!.env.example
+
+# OAuth-токены и client-secret (с реальными ключами)
+token.json
+token-*.json
+*client_secret*.json
+key.txt
+
+# ===== Виртуальное окружение =====
+venv/
+.venv/
+env/
+ENV/
+
+# ===== Кэш Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ===== Тесты и покрытие =====
+.pytest_cache/
+.coverage
+.coverage.*
+.hypothesis/
+htmlcov/
+
+# ===== IDE / редакторы =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Логи =====
+logs/
+*.log
+
+# ===== Данные, создаваемые приложением =====
+*_captioned.mp4
+*_vocals.mp4
+*.subs.ass
+subs.ass
+mix.wav
