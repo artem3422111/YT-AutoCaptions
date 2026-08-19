@@ -1,60 +1,80 @@
-"""Авто-генерация метаданных (название, описание, теги) для аниме-шортсов.
+"""Генерация метаданных шортсов (название, описание, теги) с гибкой настройкой.
 
-Поддерживает полную настройку шаблона через файл shorts_template.txt
-(см. shorts_template.txt.example). Если файл не задан — используются
-значения из .env и встроенные заготовки.
+Шаблон полностью конфигурируется (подойдёт любому формату контента — аниме,
+реакции, обзоры и т.п.):
+  - файл-шаблон shorts_template.txt (см. shorts_template.txt.example)
+    определяет список полей ввода (секция FIELDS), заголовок (TITLE),
+    описание (DESCRIPTION) и теги (TAGS);
+  - плейсхолдеры {имя_поля}, а также {site}, {tg}, {tags} подставляются в текст.
+Если файл не задан — используются поля и заготовки по умолчанию (аниме).
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from app.config import config
 
+# Встроенные поля по умолчанию (аниме): ключ, подпись в UI, placeholder
+_DEFAULT_FIELDS = [
+    ("название", "Название", "Например: Attack on Titan"),
+    ("озвучка", "Озвучка", "Например: AniLibria"),
+]
+
+
+@dataclass
+class Field:
+    """Поле ввода шаблона шортсов."""
+    key: str          # имя плейсхолдера {key}
+    label: str        # подпись в интерфейсе
+    placeholder: str  # подсказка внутри поля
+
+
+def get_shorts_fields() -> list[Field]:
+    """Возвращает список полей ввода для текущего шаблона."""
+    if config.SHORTS_TEMPLATE_FILE and config.SHORTS_TEMPLATE_FILE.exists():
+        sections = _parse_template(config.SHORTS_TEMPLATE_FILE)
+        fields = _parse_fields(sections.get("FIELDS", []))
+        if fields:
+            return fields
+    return [Field(key, label, placeholder) for key, label, placeholder in _DEFAULT_FIELDS]
+
 
 def generate_shorts_metadata(
-    anime_name: str, dubbing: str = ""
+    values: dict[str, str],
 ) -> tuple[str, str, list[str]]:
-    """Генерирует (title, description, tags) из названия аниме и озвучки."""
-    anime_name = anime_name.strip()
-    dubbing = dubbing.strip()
+    """Генерирует (title, description, tags), подставляя значения полей.
 
+    values — словарь {ключ_поля: введённый текст}. Ключи определяются
+    функцией get_shorts_fields().
+    """
     if config.SHORTS_TEMPLATE_FILE and config.SHORTS_TEMPLATE_FILE.exists():
-        return _from_template_file(config.SHORTS_TEMPLATE_FILE, anime_name, dubbing)
-    return _builtin(anime_name, dubbing)
+        return _from_template_file(config.SHORTS_TEMPLATE_FILE, values)
+    return _builtin(values)
 
 
 def _from_template_file(
-    path: Path, anime_name: str, dubbing: str
+    path: Path, values: dict[str, str]
 ) -> tuple[str, str, list[str]]:
     """Читает пользовательский шаблон и подставляет значения."""
     sections = _parse_template(path)
     tags = _split_tags(sections.get("TAGS", []))
-
-    placeholders = {
-        "anime": anime_name,
-        "dubbing": dubbing,
-        "site": config.SHORTS_SITE_URL,
-        "tg": config.SHORTS_TG_URL,
-        "tags": _tags_to_hashtag(tags),
-    }
+    placeholders = _make_placeholders(values, tags)
 
     title = _render(sections.get("TITLE", [""]), placeholders)
     description = _render(sections.get("DESCRIPTION", []), placeholders)
     result_tags = list(tags)
-    result_tags.extend(_title_variants(anime_name, dubbing))
+    result_tags.extend(_field_variants(values))
     return title, description, _unique(result_tags)[:100]
 
 
-def _builtin(anime_name: str, dubbing: str) -> tuple[str, str, list[str]]:
+def _builtin(values: dict[str, str]) -> tuple[str, str, list[str]]:
     """Встроенная генерация (когда пользователь не создал файл-шаблон)."""
-    if dubbing:
-        title = f"«{anime_name}» — нарезка | {dubbing}"
-    else:
-        title = f"«{anime_name}» — нарезка"
-
-    lines = [f"«{anime_name}» — нарезка"]
-    if dubbing:
-        lines.append(f"Озвучка: {dubbing}")
+    title_part = _title_part(values)
+    lines = [title_part]
+    for label, value in _nonempty_supplements(values):
+        if label:
+            lines.append(f"{label}: {value}")
     lines.append("")
     if config.SHORTS_SITE_URL:
         lines.append(f"🎬 Наш сайт: {config.SHORTS_SITE_URL}")
@@ -63,27 +83,81 @@ def _builtin(anime_name: str, dubbing: str) -> tuple[str, str, list[str]]:
     lines.append("Подпишись на канал! ❤️")
     lines.append("")
     lines.append("#аниме #анимешортс #аниме_нарезка")
-    description = "\n".join(lines)
 
     tags = list(config.SHORTS_BASE_TAGS)
-    tags.extend(_title_variants(anime_name, dubbing))
-    return title, description, _unique(tags)[:100]
+    tags.extend(_field_variants(values))
+    return title_part, "\n".join(lines), _unique(tags)[:100]
+
+
+def _title_part(values: dict[str, str]) -> str:
+    """Строит заголовок из первого заполненного поля, остальные — через '—'."""
+    filled = [v for v in values.values() if v.strip()]
+    if not filled:
+        return ""
+    return " — ".join(f"«{filled[0]}»" if i == 0 else v for i, v in enumerate(filled))
+
+
+def _nonempty_supplements(values: dict[str, str]) -> list[tuple[str, str]]:
+    """Возвращает пары (подпись поля, значение) для непустых полей, кроме первого."""
+    labels = {f.key: f.label for f in get_shorts_fields()}
+    filled = [(labels.get(k, k), v.strip()) for k, v in values.items() if v.strip()]
+    return filled[1:]
+
+
+def _make_placeholders(values: dict[str, str], tags: list[str]) -> dict[str, str]:
+    placeholders = {
+        key: value.strip() for key, value in values.items()
+    }
+    placeholders["site"] = config.SHORTS_SITE_URL
+    placeholders["tg"] = config.SHORTS_TG_URL
+    placeholders["tags"] = _tags_to_hashtag(tags)
+    return placeholders
+
+
+def _field_variants(values: dict[str, str]) -> list[str]:
+    """Теги из заполненных полей (оригинал + транслитерация)."""
+    result: list[str] = []
+    for value in values.values():
+        value = value.strip()
+        if not value:
+            continue
+        result.append(value)
+        alt = _transliterate(value)
+        if alt and alt.lower() != value.lower():
+            result.append(alt)
+    return result
+
+
+def _parse_fields(lines: list[str]) -> list[Field]:
+    """Разбирает секцию FIELDS: строки 'ключ | Подпись | placeholder'."""
+    fields: list[Field] = []
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if not parts or not parts[0]:
+            continue
+        key = parts[0]
+        label = parts[1] if len(parts) > 1 else key
+        placeholder = parts[2] if len(parts) > 2 else key
+        fields.append(Field(key, label, placeholder))
+    return fields
 
 
 def _parse_template(path: Path) -> dict[str, list[str]]:
-    """Разбирает файл на секции TITLE / DESCRIPTION / TAGS."""
+    """Разбирает файл на секции FIELDS / TITLE / DESCRIPTION / TAGS."""
     sections: dict[str, list[str]] = {}
     current: str | None = None
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.rstrip()
         upper = line.strip().upper()
-        if upper in ("TITLE:", "DESCRIPTION:", "TAGS:"):
+        if upper in ("FIELDS:", "TITLE:", "DESCRIPTION:", "TAGS:"):
             current = upper[:-1]
             sections.setdefault(current, [])
             continue
         if current:
             sections[current].append(line)
-    # убираем лишние пустые строки по краям title/description
     for key in ("TITLE", "DESCRIPTION"):
         if key in sections:
             sections[key] = _trim_edges(sections[key])

@@ -58,7 +58,7 @@ class UploadForm(QWidget):
 
         layout.addWidget(self._build_header())
 
-        anime_card = self._build_anime_card()
+        anime_card = self._build_template_card()
         if anime_card is not None:
             layout.addWidget(anime_card)
 
@@ -227,7 +227,7 @@ class UploadForm(QWidget):
         label.setObjectName("fieldLabel")
         return label
 
-    def _build_anime_card(self):
+    def _build_template_card(self):
         """Возвращает виджет с шаблоном, либо None (обычное видео)."""
         return None
 

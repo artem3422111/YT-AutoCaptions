@@ -1,23 +1,21 @@
-"""Вкладка «Шортсы»: загрузка вертикальных видео с авто-шаблоном аниме."""
+"""Вкладка «Шортсы»: загрузка вертикальных видео с настраиваемым шаблоном."""
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
     QGridLayout,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-from app.shorts_templates import generate_shorts_metadata
+from app.shorts_templates import generate_shorts_metadata, get_shorts_fields
 from app.widgets.upload_form import UploadForm
 
 
 class ShortsTab(UploadForm):
-    """Форма загрузки шортсов (вертикальные видео) с авто-шаблоном."""
+    """Форма загрузки шортсов с авто-шаблоном (поля задаются конфигом)."""
 
     def __init__(self, parent=None) -> None:
         super().__init__(is_shorts=True, parent=parent)
@@ -33,51 +31,54 @@ class ShortsTab(UploadForm):
         if index != -1:
             self.privacy_combo.setCurrentIndex(index)
 
-    def _build_anime_card(self) -> QGroupBox:
-        box = QGroupBox("Шаблон аниме (автозаполнение)", self)
+    def _build_template_card(self) -> QGroupBox:
+        box = QGroupBox("Шаблон (автозаполнение)", self)
         grid = QGridLayout(box)
         grid.setContentsMargins(14, 16, 14, 14)
         grid.setSpacing(10)
         grid.setColumnStretch(1, 1)
         grid.setColumnStretch(3, 1)
 
-        grid.addWidget(self._field_label("Название аниме *"), 0, 0)
-        self.anime_name_edit = QLineEdit(box)
-        self.anime_name_edit.setPlaceholderText("Например: Attack on Titan")
-        self.anime_name_edit.textChanged.connect(self._on_anime_changed)
-        grid.addWidget(self.anime_name_edit, 0, 1)
+        self._field_edits = []
+        for idx, field in enumerate(get_shorts_fields()):
+            row = idx // 2
+            col = (idx % 2) * 2
+            grid.addWidget(self._field_label(field.label), row, col)
+            edit = QLineEdit(box)
+            edit.setPlaceholderText(field.placeholder)
+            edit.textChanged.connect(self._on_template_field_changed)
+            grid.addWidget(edit, row, col + 1)
+            self._field_edits.append(edit)
 
-        grid.addWidget(self._field_label("Озвучка"), 0, 2)
-        self.dubbing_edit = QLineEdit(box)
-        self.dubbing_edit.setPlaceholderText("Например: AniLibria")
-        self.dubbing_edit.textChanged.connect(self._on_anime_changed)
-        grid.addWidget(self.dubbing_edit, 0, 3)
-
+        rows = (len(self._field_edits) + 1) // 2
         hint = QLabel(
-            "Введите название аниме (и озвучку) — название, описание и теги "
-            "заполнятся сами и останутся редактируемыми.",
+            "Заполните поля — название, описание и теги подставятся автоматически "
+            "и останутся редактируемыми.",
             box,
         )
         hint.setObjectName("mutedLabel")
         hint.setWordWrap(True)
-        grid.addWidget(hint, 1, 0, 1, 4)
+        grid.addWidget(hint, rows, 0, 1, 4)
 
         return box
 
-    def _on_anime_changed(self) -> None:
-        """Автозаполняем поля при вводе названия аниме/озвучки."""
-        if not self.anime_name_edit.text().strip():
-            return
+    def _on_template_field_changed(self) -> None:
+        """Автозаполняем поля при вводе хотя бы одного поля шаблона."""
         self._apply_auto_template()
         self._update_upload_state()
 
+    def _field_values(self) -> dict[str, str]:
+        values = {}
+        for field, edit in zip(get_shorts_fields(), self._field_edits):
+            values[field.key] = edit.text()
+        return values
+
     def _apply_auto_template(self) -> None:
-        """Заполняет название/описание/теги по шаблону из полей аниме."""
-        anime = self.anime_name_edit.text().strip()
-        if not anime:
+        """Заполняет название/описание/теги из текущих полей шаблона."""
+        values = self._field_values()
+        if not any(v.strip() for v in values.values()):
             return
-        dubbing = self.dubbing_edit.text().strip()
-        title, description, tags = generate_shorts_metadata(anime, dubbing)
+        title, description, tags = generate_shorts_metadata(values)
 
         if not self.title_edit.isModified():
             self.title_edit.blockSignals(True)
