@@ -1,4 +1,4 @@
-# ViVideoYouTube
+# YT-AutoCaptions
 
 Мини-приложение для загрузки видео и шортсов на YouTube.
 

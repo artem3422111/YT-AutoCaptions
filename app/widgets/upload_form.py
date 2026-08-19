@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -64,7 +65,8 @@ class UploadForm(QWidget):
 
         layout.addWidget(self._build_file_card())
 
-        layout.addWidget(self._build_details_card())
+        self.details_card = self._build_details_card()
+        layout.addWidget(self.details_card, 1)
 
         layout.addWidget(self._build_settings_card())
 
@@ -138,6 +140,9 @@ class UploadForm(QWidget):
 
     def _build_details_card(self) -> QGroupBox:
         box = QGroupBox("Детали публикации", self)
+        # Карточка занимает свободное вертикальное место, чтобы описание
+        # можно было увеличивать при изменении размера окна.
+        box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         grid = QGridLayout(box)
         grid.setContentsMargins(14, 16, 14, 14)
         grid.setSpacing(10)
@@ -153,8 +158,13 @@ class UploadForm(QWidget):
         grid.addWidget(self._field_label("Описание"), 1, 0)
         self.desc_edit = QPlainTextEdit(box)
         self.desc_edit.setPlaceholderText("Расскажите, о чём это видео…")
-        self.desc_edit.setMaximumHeight(120)
+        self.desc_edit.setMinimumHeight(110)
+        # Описание растягивается вместе с окном (можно увеличивать высоту)
+        self.desc_edit.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         grid.addWidget(self.desc_edit, 1, 1, 1, 2)
+        grid.setRowStretch(1, 1)
 
         grid.addWidget(self._field_label("Теги"), 2, 0)
         self.tags_edit = QLineEdit(box)
