@@ -185,7 +185,7 @@ class CaptionTab(QWidget):
             model=self.model_combo.currentData(),
             lang=self._selected_lang(),
             font="DejaVu Sans",
-            font_size=58,
+            font_size=35,
             out_path=str(out_path),
             parent=self,
         )

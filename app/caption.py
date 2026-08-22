@@ -93,7 +93,7 @@ def caption_video(
     model: str = "small",
     lang: str | None = "ru",
     font: str = "DejaVu Sans",
-    font_size: int = 58,
+    font_size: int = 35,
     out: Path | None = None,
     progress: callable | None = None,
     keep: bool = False,
@@ -183,7 +183,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font},{font_size},{COLOR_ACTIVE},{COLOR_PASSIVE},&H00101010,&HA0000000,-1,0,0,0,100,100,0,0,1,3,2,2,80,80,40,1
+Style: Default,{font},{font_size},{COLOR_ACTIVE},{COLOR_PASSIVE},&H00101010,&HA0000000,-1,0,0,0,100,100,0,0,1,3,2,5,0,0,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text

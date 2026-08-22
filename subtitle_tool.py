@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--font", default="DejaVu Sans", help="Шрифт субтитров")
     parser.add_argument(
-        "--font-size", type=int, default=58, help="Размер шрифта (для 1080p)"
+        "--font-size", type=int, default=35, help="Размер шрифта (для 1080p)"
     )
     parser.add_argument(
         "--keep", action="store_true",
